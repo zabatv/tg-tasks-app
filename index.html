@@ -3,79 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Задачи</title>
+  <title>Моя галактика</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
-  <main class="app">
-    <header class="header">
-      <div>
-        <p class="greeting" id="greeting">Привет!</p>
-        <h1>Мои задачи</h1>
-        <button class="pill" id="giftsBtn" type="button">🎁 Мои подарки</button>
-      </div>
-      <div class="progress" id="progress" aria-label="Прогресс">
-        <svg viewBox="0 0 36 36">
-          <circle class="track" cx="18" cy="18" r="15.9"></circle>
-          <circle class="bar" id="progressBar" cx="18" cy="18" r="15.9"></circle>
-        </svg>
-        <span id="progressText">0%</span>
-      </div>
-    </header>
-
-    <nav class="tabs" role="tablist">
-      <button class="tab active" data-filter="all" role="tab">Все <span id="countAll">0</span></button>
-      <button class="tab" data-filter="active" role="tab">Активные <span id="countActive">0</span></button>
-      <button class="tab" data-filter="done" role="tab">Готово <span id="countDone">0</span></button>
-    </nav>
-
-    <ul class="list" id="list"></ul>
-
-    <div class="empty" id="empty" hidden>
-      <div class="empty-icon">✓</div>
-      <p id="emptyText">Задач пока нет</p>
-      <small>Нажмите «Добавить задачу», чтобы начать</small>
+  <div class="galaxy-screen" id="galaxyView">
+    <canvas id="galaxySky"></canvas>
+    <div class="g-hud g-hud-top">
+      <div class="g-title">ТВОЯ ГАЛАКТИКА</div>
+      <div class="g-sub" id="galaxySub">&nbsp;</div>
     </div>
-  </main>
+    <div class="g-hud g-hud-bottom-l" id="galaxyStats"></div>
+    <div class="g-hud g-hud-bottom-r" id="galaxyHint">ТЯНИ, ЧТОБЫ ВРАЩАТЬ</div>
+    <div class="g-status" id="galaxyStatus"></div>
+  </div>
 
-  <!-- Экран подарков -->
-  <section class="app gifts" id="giftsView" hidden>
-    <header class="gifts-header">
-      <button class="back" id="giftsBack" type="button" aria-label="Назад">‹</button>
-      <h1>Мои подарки</h1>
-    </header>
-
-    <div class="stats">
-      <div class="stat"><span id="statTotal">—</span><small>подарков</small></div>
-      <div class="stat"><span id="statUnique">—</span><small>уникальных</small></div>
-      <div class="stat"><span id="statStars">—</span><small>⭐ стоимость</small></div>
-    </div>
-
-    <p class="gifts-note" id="giftsNote" hidden>Уникальные подарки оценены по минимальной цене коллекции на Fragment, пересчитанной в звёзды</p>
-    <p class="gifts-status" id="giftsStatus"></p>
-    <ul class="gift-grid" id="giftGrid"></ul>
-  </section>
-
-  <!-- Экран добавления -->
-  <section class="sheet" id="sheet" hidden>
-    <div class="sheet-backdrop" id="sheetBackdrop"></div>
-    <form class="sheet-body" id="form" autocomplete="off">
-      <div class="sheet-handle"></div>
-      <h2>Новая задача</h2>
-      <input id="title" class="input" type="text" maxlength="120" placeholder="Что нужно сделать?" required>
-      <p class="label">Приоритет</p>
-      <div class="chips" id="priority">
-        <button type="button" class="chip" data-value="low">Низкий</button>
-        <button type="button" class="chip active" data-value="mid">Средний</button>
-        <button type="button" class="chip" data-value="high">Высокий</button>
-      </div>
-      <button type="submit" class="submit" id="fallbackSubmit">Сохранить</button>
-    </form>
-  </section>
-
-  <button class="fab" id="fab" type="button">+ Добавить задачу</button>
-
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
