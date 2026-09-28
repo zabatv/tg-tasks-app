@@ -189,7 +189,7 @@
   const gifts = {
     main: document.querySelector("main.app"),
     view: $("giftsView"), grid: $("giftGrid"), status: $("giftsStatus"),
-    total: $("statTotal"), unique: $("statUnique"), stars: $("statStars"),
+    total: $("statTotal"), unique: $("statUnique"), stars: $("statStars"), note: $("giftsNote"),
     loaded: false,
   };
   const formatNumber = (n) => n.toLocaleString("ru-RU");
@@ -245,8 +245,9 @@
   function renderGifts(data) {
     gifts.total.textContent = formatNumber(data.total);
     gifts.unique.textContent = formatNumber(data.unique);
-    gifts.stars.textContent = formatNumber(data.stars);
+    gifts.stars.textContent = (data.estimated ? "≈" : "") + formatNumber(data.stars);
     gifts.status.textContent = data.items.length ? "" : "На профиле пока нет подарков";
+    gifts.note.hidden = !data.estimated;
     gifts.grid.replaceChildren(...data.items.map(renderGift));
     if (data.total > data.items.length) {
       gifts.status.textContent = `Показаны первые ${data.items.length} из ${formatNumber(data.total)}`;
@@ -268,7 +269,9 @@
 
     if (item.type === "unique") {
       title.textContent = item.title;
-      meta.textContent = `#${formatNumber(item.number)}`;
+      meta.textContent = item.stars
+        ? `#${formatNumber(item.number)} · ≈⭐ ${formatNumber(item.stars)}`
+        : `#${formatNumber(item.number)}`;
       if (item.model) card.title = item.model;
       if (item.backdrop) {
         card.style.background = `radial-gradient(circle, ${item.backdrop.center}, ${item.backdrop.edge})`;

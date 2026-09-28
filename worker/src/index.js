@@ -27,7 +27,7 @@ export default {
 
     try {
       const owned = await fetchAllGifts(user.id, env.BOT_TOKEN);
-      return json(summarize(owned), 200, cors);
+      return json(await summarize(owned), 200, cors);
     } catch (e) {
       return json({ error: "telegram_error", message: e.message }, 502, cors);
     }
@@ -92,8 +92,59 @@ async function fetchAllGifts(userId, botToken) {
   return { total, gifts };
 }
 
+// ---------- Оценка уникальных подарков по Fragment ----------
+// У Bot API нет рыночной цены, поэтому берём минимальную цену коллекции на fragment.com (в TON)
+// и переводим в звёзды по цене, за которую Fragment продаёт звёзды.
+async function fragmentHtml(path) {
+  const res = await fetch(`https://fragment.com${path}`, {
+    headers: { "User-Agent": "Mozilla/5.0" },
+    cf: { cacheTtl: 600, cacheEverything: true },
+  });
+  if (!res.ok) throw new Error(`fragment ${res.status}`);
+  return res.text();
+}
+
+// "9<span class="mini-frac">.4347</span>" → 9.4347, "1,000" → 1000
+const parseValue = (raw) => Number(raw.replace(/<[^>]+>/g, "").replace(/[,\s]/g, ""));
+
+async function starsPerTon() {
+  const html = await fragmentHtml("/stars/buy");
+  const block = html.slice(html.indexOf('name="stars" value="1000"'));
+  const m = block.match(/icon-ton">([\s\S]*?)<\/div>/);
+  const ton = m && parseValue(m[1]);
+  if (!ton) throw new Error("stars rate not found");
+  return 1000 / ton;
+}
+
+async function collectionFloorTon(collection) {
+  const html = await fragmentHtml(`/gifts/${collection}?sort=price_asc&filter=sale`);
+  const m = html.match(/tm-grid-item-value tm-value icon-before icon-ton">([\s\S]*?)<\/div>/);
+  return m ? parseValue(m[1]) : null;
+}
+
+async function priceUniqueGifts(items) {
+  const unique = items.filter((i) => i.type === "unique" && i.slug);
+  if (!unique.length) return;
+
+  let rate;
+  try { rate = await starsPerTon(); } catch { return; }
+
+  const collections = [...new Set(unique.map((i) => i.slug.split("-")[0].toLowerCase()))];
+  const floors = Object.fromEntries(
+    await Promise.all(collections.map(async (c) => [c, await collectionFloorTon(c).catch(() => null)])),
+  );
+
+  for (const item of unique) {
+    const floor = floors[item.slug.split("-")[0].toLowerCase()];
+    if (!floor) continue;
+    item.floorTon = floor;
+    item.stars = Math.round(floor * rate);
+    item.estimated = true;
+  }
+}
+
 // Оставляем только то, что нужно приложению
-function summarize({ total, gifts }) {
+async function summarize({ total, gifts }) {
   const items = gifts.map((g) => {
     if (g.type === "unique") {
       const u = g.gift;
@@ -121,9 +172,12 @@ function summarize({ total, gifts }) {
     };
   });
 
+  await priceUniqueGifts(items);
+
   return {
     total,
     unique: items.filter((i) => i.type === "unique").length,
+    estimated: items.some((i) => i.estimated),
     stars: items.reduce((sum, i) => sum + (i.stars || 0), 0),
     items,
   };
