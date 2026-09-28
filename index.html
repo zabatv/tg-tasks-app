@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Задачи</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
   <main class="app">
@@ -13,6 +13,7 @@
       <div>
         <p class="greeting" id="greeting">Привет!</p>
         <h1>Мои задачи</h1>
+        <button class="pill" id="giftsBtn" type="button">🎁 Мои подарки</button>
       </div>
       <div class="progress" id="progress" aria-label="Прогресс">
         <svg viewBox="0 0 36 36">
@@ -38,6 +39,23 @@
     </div>
   </main>
 
+  <!-- Экран подарков -->
+  <section class="app gifts" id="giftsView" hidden>
+    <header class="gifts-header">
+      <button class="back" id="giftsBack" type="button" aria-label="Назад">‹</button>
+      <h1>Мои подарки</h1>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><span id="statTotal">—</span><small>подарков</small></div>
+      <div class="stat"><span id="statUnique">—</span><small>уникальных</small></div>
+      <div class="stat"><span id="statStars">—</span><small>⭐ стоимость</small></div>
+    </div>
+
+    <p class="gifts-status" id="giftsStatus"></p>
+    <ul class="gift-grid" id="giftGrid"></ul>
+  </section>
+
   <!-- Экран добавления -->
   <section class="sheet" id="sheet" hidden>
     <div class="sheet-backdrop" id="sheetBackdrop"></div>
@@ -57,6 +75,6 @@
 
   <button class="fab" id="fab" type="button">+ Добавить задачу</button>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

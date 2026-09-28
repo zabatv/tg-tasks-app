@@ -3,6 +3,8 @@
   // initData пустой, если страница открыта не из Telegram
   const inTelegram = Boolean(tg && tg.initData);
   const STORAGE_KEY = "tasks";
+  // Адрес Cloudflare Worker из папки worker/
+  const API_URL = "https://tg-tasks-gifts.zabatv.workers.dev";
 
   const $ = (id) => document.getElementById(id);
   const els = {
@@ -183,6 +185,114 @@
     for (const chip of els.priority.children) chip.classList.toggle("active", chip.dataset.value === value);
   }
 
+  // ---------- Подарки ----------
+  const gifts = {
+    main: document.querySelector("main.app"),
+    view: $("giftsView"), grid: $("giftGrid"), status: $("giftsStatus"),
+    total: $("statTotal"), unique: $("statUnique"), stars: $("statStars"),
+    loaded: false,
+  };
+  const formatNumber = (n) => n.toLocaleString("ru-RU");
+
+  function openGifts() {
+    haptic.tap();
+    gifts.main.hidden = true;
+    els.fab.hidden = true;
+    gifts.view.hidden = false;
+    window.scrollTo(0, 0);
+    if (inTelegram) {
+      tg.MainButton.hide();
+      tg.BackButton.show();
+    }
+    if (!gifts.loaded) loadGifts();
+  }
+
+  function closeGifts() {
+    gifts.view.hidden = true;
+    gifts.main.hidden = false;
+    els.fab.hidden = false;
+    if (inTelegram) {
+      tg.BackButton.hide();
+      tg.MainButton.show();
+    }
+  }
+
+  async function loadGifts() {
+    if (!inTelegram) return showGiftsStatus("Откройте приложение в Telegram, чтобы увидеть свои подарки");
+    if (!API_URL) return showGiftsStatus("Сервер подарков ещё не настроен");
+
+    showGiftsStatus("Загружаю подарки…");
+    try {
+      const res = await fetch(`${API_URL}/gifts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData: tg.initData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error);
+      gifts.loaded = true;
+      renderGifts(data);
+    } catch (e) {
+      showGiftsStatus(`Не удалось загрузить подарки: ${e.message}`);
+    }
+  }
+
+  function showGiftsStatus(text) {
+    gifts.status.textContent = text;
+    gifts.grid.replaceChildren();
+  }
+
+  function renderGifts(data) {
+    gifts.total.textContent = formatNumber(data.total);
+    gifts.unique.textContent = formatNumber(data.unique);
+    gifts.stars.textContent = formatNumber(data.stars);
+    gifts.status.textContent = data.items.length ? "" : "На профиле пока нет подарков";
+    gifts.grid.replaceChildren(...data.items.map(renderGift));
+    if (data.total > data.items.length) {
+      gifts.status.textContent = `Показаны первые ${data.items.length} из ${formatNumber(data.total)}`;
+    }
+  }
+
+  function renderGift(item) {
+    const li = document.createElement("li");
+    const card = document.createElement(item.slug ? "a" : "div");
+    card.className = "gift " + item.type;
+
+    const emoji = document.createElement("div");
+    emoji.className = "gift-emoji";
+    emoji.textContent = item.emoji;
+    const title = document.createElement("div");
+    title.className = "gift-title";
+    const meta = document.createElement("div");
+    meta.className = "gift-meta";
+
+    if (item.type === "unique") {
+      title.textContent = item.title;
+      meta.textContent = `#${formatNumber(item.number)}`;
+      if (item.model) card.title = item.model;
+      if (item.backdrop) {
+        card.style.background = `radial-gradient(circle, ${item.backdrop.center}, ${item.backdrop.edge})`;
+        card.style.color = item.backdrop.text;
+      }
+      card.href = `https://t.me/nft/${item.slug}`;
+      card.addEventListener("click", (e) => {
+        if (!inTelegram) return;
+        e.preventDefault();
+        tg.openTelegramLink(card.href);
+      });
+    } else {
+      title.textContent = `⭐ ${formatNumber(item.stars)}`;
+      meta.textContent = item.sender ? `от ${item.sender}` : formatDate(item.date * 1000);
+    }
+
+    card.append(emoji, title, meta);
+    li.append(card);
+    return li;
+  }
+
+  $("giftsBtn").addEventListener("click", openGifts);
+  $("giftsBack").addEventListener("click", closeGifts);
+
   // ---------- События ----------
   els.list.addEventListener("click", (e) => {
     const target = e.target.closest("[data-action]");
@@ -214,7 +324,11 @@
   });
   els.fab.addEventListener("click", openSheet);
   els.backdrop.addEventListener("click", closeSheet);
-  document.addEventListener("keydown", (e) => e.key === "Escape" && !els.sheet.hidden && closeSheet());
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!els.sheet.hidden) closeSheet();
+    else if (!gifts.view.hidden) closeGifts();
+  });
 
   // ---------- Инициализация ----------
   if (inTelegram) {
@@ -228,7 +342,7 @@
     tg.MainButton.setText("Добавить задачу");
     tg.MainButton.show();
     tg.MainButton.onClick(() => (els.sheet.hidden ? openSheet() : submit()));
-    tg.BackButton.onClick(closeSheet);
+    tg.BackButton.onClick(() => (els.sheet.hidden ? closeGifts() : closeSheet()));
   }
 
   storage.load().then((data) => {
