@@ -12,6 +12,12 @@
   };
 
   const formatNumber = (n) => n.toLocaleString("ru-RU");
+  function pluralRu(n, one, few, many) {
+    const mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  }
 
   function fetchGiftsData() {
     return fetch(`${API_URL}/gifts`, {
@@ -138,8 +144,17 @@
       const items = (data && data.items) || [];
       const uniqueItems = items.filter((i) => i.type === "unique");
       const regularItems = items.filter((i) => i.type === "regular");
-      const total = Math.max(0, (data && data.total) || 0);
-      const renderCount = Math.max(0, Math.min(total, RENDER_CAP) - uniqueItems.length);
+      const totalGifts = Math.max(0, (data && data.total) || 0);
+      const starValue = Math.max(0, (data && data.stars) || 0);
+
+      // Население галактики масштабируется от реальной суммы звёзд (⭐), а не от числа подарков —
+      // один дорогой подарок на 30к звёзд должен выглядеть как богатая галактика, а не как одна точка.
+      let desired = Math.round(30 * Math.sqrt(starValue));
+      desired = Math.max(desired, Math.min(items.length, RENDER_CAP), totalGifts > 0 ? 40 : 0);
+      const population = clamp(desired, 0, RENDER_CAP);
+      const capped = desired > RENDER_CAP;
+
+      const renderCount = Math.max(0, population - uniqueItems.length);
       const nBulgeFiller = Math.round(renderCount * BULGE_FRACTION);
       const nDiskSlots = renderCount - nBulgeFiller;
 
@@ -156,11 +171,12 @@
 
       for (const s of stars) if (s.link) interactive.push(s);
 
+      const giftWord = pluralRu(totalGifts, "подарок", "подарка", "подарков");
       subEl.textContent = uniqueItems.length
-        ? `${uniqueItems.length} уникальных · ${formatNumber(total)} всего`
-        : `${formatNumber(total)} подарков`;
-      let statsText = `⭐ ${data.estimated ? "≈" : ""}${formatNumber(data.stars || 0)}`;
-      if (total > RENDER_CAP) statsText += " · показана часть";
+        ? `${uniqueItems.length} ${pluralRu(uniqueItems.length, "уникальный", "уникальных", "уникальных")} · ${formatNumber(totalGifts)} ${giftWord}`
+        : `${formatNumber(totalGifts)} ${giftWord}`;
+      let statsText = `⭐ ${data.estimated ? "≈" : ""}${formatNumber(starValue)}`;
+      if (capped) statsText += " · показана часть";
       statsEl.textContent = statsText;
       statusEl.textContent = "";
     }
