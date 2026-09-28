@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Задачи</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div>
+        <p class="greeting" id="greeting">Привет!</p>
+        <h1>Мои задачи</h1>
+      </div>
+      <div class="progress" id="progress" aria-label="Прогресс">
+        <svg viewBox="0 0 36 36">
+          <circle class="track" cx="18" cy="18" r="15.9"></circle>
+          <circle class="bar" id="progressBar" cx="18" cy="18" r="15.9"></circle>
+        </svg>
+        <span id="progressText">0%</span>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-filter="all" role="tab">Все <span id="countAll">0</span></button>
+      <button class="tab" data-filter="active" role="tab">Активные <span id="countActive">0</span></button>
+      <button class="tab" data-filter="done" role="tab">Готово <span id="countDone">0</span></button>
+    </nav>
+
+    <ul class="list" id="list"></ul>
+
+    <div class="empty" id="empty" hidden>
+      <div class="empty-icon">✓</div>
+      <p id="emptyText">Задач пока нет</p>
+      <small>Нажмите «Добавить задачу», чтобы начать</small>
+    </div>
+  </main>
+
+  <!-- Экран добавления -->
+  <section class="sheet" id="sheet" hidden>
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <form class="sheet-body" id="form" autocomplete="off">
+      <div class="sheet-handle"></div>
+      <h2>Новая задача</h2>
+      <input id="title" class="input" type="text" maxlength="120" placeholder="Что нужно сделать?" required>
+      <p class="label">Приоритет</p>
+      <div class="chips" id="priority">
+        <button type="button" class="chip" data-value="low">Низкий</button>
+        <button type="button" class="chip active" data-value="mid">Средний</button>
+        <button type="button" class="chip" data-value="high">Высокий</button>
+      </div>
+      <button type="submit" class="submit" id="fallbackSubmit">Сохранить</button>
+    </form>
+  </section>
+
+  <button class="fab" id="fab" type="button">+ Добавить задачу</button>
+
+  <script src="app.js?v=2"></script>
+</body>
+</html>
